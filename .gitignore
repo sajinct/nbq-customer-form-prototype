@@ -1,0 +1,20 @@
+# --- Client-confidential: keep OUT of a public repo -------------------------
+# The development guide names a client contact, quotes the engagement's hours and
+# commercial scope, and describes internal infrastructure (ESB endpoint, root CA,
+# internal hosting). None of that belongs on a public GitHub Pages site.
+# Delete this line if the repository is PRIVATE and you want the guide tracked.
+NBQ_Customer_Form_Development_Guide.md
+
+# --- Superseded working files ----------------------------------------------
+# The pre-kiosk (scrolling) versions of both forms, kept locally for reference.
+_backup_prescroll/
+
+# --- OS / editor noise ------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~

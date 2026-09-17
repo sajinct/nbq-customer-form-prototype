@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="robots" content="noindex, nofollow" />
+  <!-- Prototype for review, not an official NBQ service: keep it out of search results. -->
+  <title>NBQ | Contact Us &ndash; Suggestions &amp; Complaints</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ============================================================
+       NBQ Contact Us - KIOSK / FULL-SCREEN BUILD
+
+       The original stacked hero -> intro -> 9-field form vertically and
+       needed ~1400px of height. Here the same content is split into two
+       side-by-side panels on landscape screens: an info rail (hero copy,
+       phone number, response promise) and the form itself in a 2-column
+       grid. Nothing scrolls; every size derives from --fs, a
+       viewport-linked scale, so the layout compresses to fit.
+       ============================================================ */
+
+    :root {
+      /* Brand palette derived from the official logo (nbq-logo.svg):
+         blue #0072BC and red #ED1C29. The darker stops are the same hues
+         scaled down, so gradients and hovers stay on-brand. */
+      --nbq-blue: #0072BC;        /* logo blue - primary */
+      --nbq-blue-mid: #005B96;    /* hover, focus borders */
+      --nbq-blue-dark: #004A7A;   /* active / gradient */
+      --nbq-blue-deep: #003B62;   /* deepest gradient stop */
+      --nbq-red: #ED1C29;         /* logo red - rules, accents, error borders */
+      --nbq-red-deep: #C71520;    /* same hue, darkened: small red TEXT (4.4:1 -> 5.9:1 on white) */
+      --bg: #F4F6F9;
+      --card: #FFFFFF;
+      --text: #1A1A1A;
+      --muted: #5A6570;
+      --border: #D0D7E0;
+      --input-bg: #F7F9FB;
+      --success: #0B7A4B;
+
+      /* Slightly tighter than the short form: nine fields to place. */
+      --fs: clamp(11px, 1.38vmin, 16px);
+      --gap: calc(var(--fs) * 0.8);
+      --pad: calc(var(--fs) * 1.5);
+      --radius: calc(var(--fs) * 0.45);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+      font-size: var(--fs);
+      line-height: 1.4;
+      background: var(--bg);
+      color: var(--text);
+      height: 100dvh;
+      overflow: hidden;                   /* no page scrollbar, ever */
+      display: flex;
+      flex-direction: column;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body.rtl {
+      font-family: 'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif;
+      direction: rtl;
+    }
+
+    /* ---------------- Header ---------------- */
+    .header {
+      flex: 0 0 auto;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: calc(var(--fs) * 0.55) var(--pad);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--gap);
+    }
+
+    .logo { display: flex; align-items: center; text-decoration: none; }
+    .logo-mark { height: calc(var(--fs) * 2.6); width: auto; display: block; }
+
+    .header-tools { display: flex; align-items: center; gap: var(--gap); }
+
+    .lang-toggle {
+      display: flex;
+      gap: calc(var(--fs) * 0.2);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: calc(var(--fs) * 0.18);
+    }
+
+    .lang-toggle button {
+      border: none;
+      background: transparent;
+      padding: calc(var(--fs) * 0.45) calc(var(--fs) * 1);
+      border-radius: 999px;
+      font-size: calc(var(--fs) * 0.85);
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--muted);
+      font-family: inherit;
+    }
+
+    .lang-toggle button.active { background: var(--nbq-blue); color: #fff; }
+
+    .icon-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--nbq-blue);
+      width: calc(var(--fs) * 2.3);
+      height: calc(var(--fs) * 2.3);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: calc(var(--fs) * 1.05);
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      font-family: inherit;
+    }
+
+    .icon-btn:hover { background: var(--bg); }
+
+    /* ---------------- Stage ---------------- */
+    .stage {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: var(--gap) var(--pad);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .shell {
+      margin: auto;
+      width: 100%;
+      max-width: calc(var(--fs) * 82);
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: 100%;
+      display: grid;
+      /* Portrait: banner row takes only what it needs, the form gets the rest.
+         Without the explicit rows, grid stretch splits the spare height and
+         the banner balloons. */
+      grid-template-columns: 1fr;
+      grid-template-rows: auto minmax(0, 1fr);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) * 2);
+      box-shadow: 0 calc(var(--fs) * 0.5) calc(var(--fs) * 1.8) rgba(0, 74, 122, 0.10);
+      overflow: hidden;
+    }
+
+    /* ---- Info rail (was the hero + intro block) ---- */
+    .rail {
+      background: linear-gradient(150deg, var(--nbq-blue) 0%, var(--nbq-blue-dark) 55%, var(--nbq-blue-deep) 100%);
+      color: #fff;
+      padding: var(--pad);
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .rail-main {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: var(--gap);
+    }
+
+    .rail h1 {
+      font-size: calc(var(--fs) * 1.7);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1.15;
+    }
+
+    .rail .tagline { font-size: calc(var(--fs) * 0.9); opacity: 0.9; }
+    .rail .rule { height: 2px; width: calc(var(--fs) * 3); background: var(--nbq-red); border-radius: 2px; flex: 0 0 auto; }
+    .rail h2 { font-size: calc(var(--fs) * 1.1); font-weight: 600; }
+    .rail p { font-size: calc(var(--fs) * 0.88); opacity: 0.92; }
+
+    .rail-call {
+      margin-top: auto;                    /* pinned to the rail's bottom */
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--fs) * 0.2);
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: var(--radius);
+      padding: calc(var(--fs) * 0.7) calc(var(--fs) * 0.9);
+      flex: 0 0 auto;
+    }
+
+    .rail-call .lbl { font-size: calc(var(--fs) * 0.75); text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.85; }
+    .rail-call a { color: #fff; font-size: calc(var(--fs) * 1.3); font-weight: 700; text-decoration: none; letter-spacing: 0.02em; }
+
+    /* ---- Form side ---- */
+
+    /* Scroll fallback lives on the content column, because .shell clips its
+       own overflow for the rounded corners. It is hidden while everything
+       fits; the no-scroll guard reveals it only when it genuinely cannot
+       (tiny screen, on-screen keyboard) - better a visible scrollbar than
+       content stranded behind an invisible one. */
+    .form-side {
+      overflow-y: auto;
+      scrollbar-width: none;
+      overscroll-behavior: contain;
+    }
+
+    .form-side::-webkit-scrollbar { width: 0; height: 0; }
+    .form-side.scrollable { scrollbar-width: thin; scrollbar-color: #B9C3CE transparent; }
+    .form-side.scrollable::-webkit-scrollbar { width: calc(var(--fs) * 0.65); }
+    .form-side.scrollable::-webkit-scrollbar-thumb { background: #B9C3CE; border-radius: 999px; }
+
+    .form-side {
+      padding: var(--pad);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .form-head { flex: 0 0 auto; margin-bottom: var(--gap); }
+
+    .form-title {
+      font-size: calc(var(--fs) * 0.95);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--nbq-blue);
+    }
+
+    .form-note { font-size: calc(var(--fs) * 0.78); color: var(--muted); }
+    .form-note .req { color: var(--nbq-red-deep); }
+
+    .form-panel {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-panel.hide { display: none; }
+
+    form {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+    }
+
+    .grid {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--gap) calc(var(--fs) * 1.2);
+    }
+
+    .field { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+    .field > label,
+    .field > .group-label {
+      font-size: calc(var(--fs) * 0.72);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--nbq-blue);
+      margin-bottom: calc(var(--fs) * 0.3);
+    }
+
+    .field > label .req,
+    .field > .group-label .req { color: var(--nbq-red-deep); margin-inline-start: 2px; }
+
+    .field > label .opt {
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+      margin-inline-start: calc(var(--fs) * 0.2);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      padding: calc(var(--fs) * 0.6) calc(var(--fs) * 0.75);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: calc(var(--fs) * 0.95);
+      font-family: inherit;
+      color: var(--text);
+      background: var(--input-bg);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      min-height: calc(var(--fs) * 2.4);   /* touch target */
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--nbq-blue-mid);
+      box-shadow: 0 0 0 3px rgba(0, 114, 188, 0.16);
+      background: #fff;
+    }
+
+    .field input.error,
+    .field select.error,
+    .field textarea.error {
+      border-color: var(--nbq-red);
+      box-shadow: 0 0 0 3px rgba(237, 28, 41, 0.14);
+    }
+
+    /* Message row takes whatever height is left over. */
+    .field.grow { flex: 1 1 auto; }
+
+    .field.grow textarea {
+      flex: 1 1 auto;
+      min-height: calc(var(--fs) * 3.6);
+      resize: none;                        /* resizing would break the fixed layout */
+    }
+
+    .msg-row { flex: 1 1 auto; min-height: 0; display: flex; }
+    .msg-row .field { flex: 1 1 auto; }
+
+    /* Mobile with 971 prefix */
+    .mobile-wrap {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--input-bg);
+    }
+
+    .mobile-wrap:focus-within {
+      border-color: var(--nbq-blue-mid);
+      box-shadow: 0 0 0 3px rgba(0, 114, 188, 0.16);
+      background: #fff;
+    }
+
+    .mobile-wrap.error { border-color: var(--nbq-red); box-shadow: 0 0 0 3px rgba(237, 28, 41, 0.14); }
+
+    .mobile-prefix {
+      background: var(--nbq-blue-dark);
+      color: #fff;
+      padding: calc(var(--fs) * 0.6) calc(var(--fs) * 0.75);
+      font-size: calc(var(--fs) * 0.95);
+      font-weight: 600;
+      white-space: nowrap;
+      display: grid;
+      place-items: center;
+    }
+
+    .mobile-wrap input {
+      border: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      border-radius: 0;
+    }
+
+    /* Yes/No radios */
+    .radio-opts { display: flex; gap: calc(var(--fs) * 1.1); align-items: center; min-height: calc(var(--fs) * 2.4); }
+
+    .radio-opts label {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--fs) * 0.35);
+      font-size: calc(var(--fs) * 0.95);
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .radio-opts input {
+      width: calc(var(--fs) * 1.05);
+      height: calc(var(--fs) * 1.05);
+      accent-color: var(--nbq-blue);
+      margin: 0;
+    }
+
+    /* Reserved error line: showing an error must not resize the layout. */
+    .meta { min-height: calc(var(--fs) * 1.05); margin-top: calc(var(--fs) * 0.2); display: flex; justify-content: space-between; gap: var(--gap); }
+    .err { font-size: calc(var(--fs) * 0.72); color: var(--nbq-red-deep); visibility: hidden; }
+    .err.show { visibility: visible; }
+    .count { font-size: calc(var(--fs) * 0.72); color: var(--muted); }
+
+    .actions { flex: 0 0 auto; display: flex; justify-content: flex-start; }
+
+    .btn-send {
+      background: var(--nbq-blue);
+      color: #fff;
+      border: none;
+      padding: calc(var(--fs) * 0.75) calc(var(--fs) * 2.4);
+      border-radius: var(--radius);
+      font-size: calc(var(--fs) * 1.05);
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: calc(var(--fs) * 0.5);
+      transition: background 0.15s;
+      min-height: calc(var(--fs) * 2.8);
+    }
+
+    .btn-send:hover { background: var(--nbq-blue-mid); }
+    .btn-send:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    .btn-send .spinner {
+      display: none;
+      width: calc(var(--fs) * 1);
+      height: calc(var(--fs) * 1);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .btn-send.loading .spinner { display: inline-block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- Success ---- */
+    .success-panel {
+      display: none;
+      flex: 1 1 auto;
+      min-height: 0;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: calc(var(--fs) * 0.6);
+    }
+
+    .success-panel.show { display: flex; }
+
+    .success-icon {
+      width: calc(var(--fs) * 3.6);
+      height: calc(var(--fs) * 3.6);
+      border-radius: 50%;
+      background: rgba(11, 122, 75, 0.12);
+      color: var(--success);
+      display: grid;
+      place-items: center;
+      font-size: calc(var(--fs) * 1.9);
+    }
+
+    .success-panel h2 { font-size: calc(var(--fs) * 1.3); color: var(--nbq-blue); }
+    .success-panel p { color: var(--muted); font-size: calc(var(--fs) * 0.92); max-width: calc(var(--fs) * 26); }
+
+    .btn-again {
+      background: transparent;
+      border: 1.5px solid var(--nbq-blue);
+      color: var(--nbq-blue);
+      padding: calc(var(--fs) * 0.6) calc(var(--fs) * 1.4);
+      border-radius: var(--radius);
+      font-size: calc(var(--fs) * 0.95);
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      min-height: calc(var(--fs) * 2.6);
+    }
+
+    .btn-again:hover { background: var(--nbq-blue); color: #fff; }
+    .auto-reset { font-size: calc(var(--fs) * 0.75); color: var(--muted); min-height: calc(var(--fs) * 1.1); }
+
+    /* ---------------- Footer ---------------- */
+    .footer {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: calc(var(--fs) * 0.5);
+      padding: calc(var(--fs) * 0.45) var(--pad);
+      font-size: calc(var(--fs) * 0.72);
+      color: var(--muted);
+      background: #fff;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .footer a { color: var(--nbq-blue); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    .proto-badge {
+      background: #E9EDF2;
+      color: #46505A;
+      border-radius: 999px;
+      padding: calc(var(--fs) * 0.15) calc(var(--fs) * 0.6);
+      font-size: calc(var(--fs) * 0.68);
+      white-space: nowrap;
+    }
+
+    /* ---------------- Adaptive layout ---------------- */
+
+    /* Landscape kiosk / desktop tab: info rail beside the form. */
+    @media (min-width: 900px) and (min-aspect-ratio: 5/4) {
+      /* Two panels: stop growing on a tall screen so the rail and the
+         message box stay in proportion instead of stretching. */
+      .shell { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr); grid-template-rows: minmax(0, 1fr); max-height: min(100%, calc(var(--fs) * 50)); }
+      .rail { padding: calc(var(--pad) * 1.3); gap: calc(var(--fs) * 1.1); }
+      .rail h1 { font-size: calc(var(--fs) * 2.1); }
+    }
+
+    /* Very wide kiosk: three form columns, so the message box grows. */
+    @media (min-width: 1500px) and (min-aspect-ratio: 16/10) {
+      .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    /* Portrait tablet: rail becomes a compact banner above the form. */
+    @media (max-aspect-ratio: 5/4), (max-width: 899px) {
+      .rail { flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--gap); padding: var(--gap) var(--pad); }
+      .rail-main { flex: 1 1 calc(var(--fs) * 20); flex-direction: row; align-items: center; flex-wrap: wrap; justify-content: flex-start; }
+      .rail .rail-copy { flex: 1 1 calc(var(--fs) * 18); min-width: 0; }
+      .rail h1 { font-size: calc(var(--fs) * 1.4); }
+      .rail .rule, .rail .tagline { display: none; }
+      .rail h2 { font-size: calc(var(--fs) * 0.95); }
+      .rail-call { margin: 0; flex-direction: row; align-items: center; gap: calc(var(--fs) * 0.6); }
+      .rail-call .lbl { display: none; }
+    }
+
+    /* Narrow: one field per row, full-width button. */
+    @media (max-width: 560px) {
+      :root { --pad: calc(var(--fs) * 1.1); }
+      .grid { grid-template-columns: minmax(0, 1fr); }
+      .actions { justify-content: stretch; }
+      .btn-send { width: 100%; justify-content: center; }
+      .rail p.detail { display: none; }
+    }
+
+    /* Short viewports: drop the non-essential chrome before shrinking fields. */
+    @media (max-height: 620px) {
+      :root { --gap: calc(var(--fs) * 0.6); --pad: calc(var(--fs) * 1.1); }
+      .rail p.detail, .form-note { display: none; }
+      .footer { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a class="logo" href="https://nbq.ae/" target="_blank" rel="noopener"
+       aria-label="NBQ – National Bank of Umm Al Qaiwain">
+      <!-- Official NBQ logo, taken from nbq.ae/ResourcePackages/Theme/dist/images/icons.svg (#icon-logo).
+           Inlined so each prototype stays a single self-contained file; nbq-logo.svg holds the same asset. -->
+      <svg class="logo-mark" viewBox="0 0 289 91" aria-hidden="true" focusable="false">
+        <path fill="#0072BC" d="M130,28.26 C136.64,28.26 138.88,27.31 139.39,22.96 L144.07,22.96 C145.394792,23.022467 146.690128,22.5560312 147.670975,21.6633293 C148.651822,20.7706274 149.237811,19.5248056 149.3,18.2 L149.3,10.53 L146.02,10.53 L146.02,18.35 C146.02,20.35 145.02,21.29 143.4,21.29 L139.57,21.29 L139.57,10.52 L136.21,10.52 L136.21,20.27 C136.21,26.75 132.63,26.91 130.46,26.9 L130,26.9 C128,26.9 123.8,27.29 123.8,20.28 L123.8,10.53 L120.43,10.53 L120.43,20.53 C120.42,26 122.15,28.25 130,28.26 Z M129.67,7.17 C130.587672,7.20652101 131.37572,6.52354647 131.47,5.61 C131.405768,4.67550868 130.605577,3.96422786 129.67,4.01 C129.06258,3.94763143 128.473103,4.23862361 128.153227,4.75874674 C127.833351,5.27886986 127.839592,5.93622878 128.169285,6.45018511 C128.498978,6.96414144 129.093874,7.24388958 129.7,7.17 L129.67,7.17 Z M169.2,26.71 C169.333651,27.6065688 170.103524,28.2701852 171.01,28.2701852 C171.916476,28.2701852 172.686349,27.6065688 172.82,26.71 C172.673133,25.8330699 171.914144,25.1906244 171.025,25.1906244 C170.135856,25.1906244 169.376867,25.8330699 169.23,26.71 L169.2,26.71 Z M145.61,26.71 C145.744059,27.6118007 146.518289,28.279445 147.43,28.279445 C148.341711,28.279445 149.115941,27.6118007 149.25,26.71 C149.069758,25.8597471 148.319147,25.2515757 147.45,25.2515757 C146.580853,25.2515757 145.830242,25.8597471 145.65,26.71 L145.61,26.71 Z M160.28,12 L160.68,12 C161.936478,11.9542866 163.153196,12.4446365 164.026856,13.3488181 C164.900517,14.2529997 165.348815,15.4858312 165.26,16.74 L165.26,17.74 L165.26,17.74 L165.26,20.81 L165.26,20.81 L165.26,21.27 L159.53,21.27 C156.96,21.01 156.14,18.99 156.14,16.81 C156.15,14.07 157.13,12 160.28,12 Z M187.53,12.83 C189.966173,12.8241459 191.956309,14.7742117 192,17.21 C191.99175,17.8483925 191.841446,18.4769369 191.56,19.05 C191.155285,19.8961212 190.591732,20.656579 189.9,21.29 L185.17,21.29 C184.478453,20.6564121 183.914928,19.8959926 183.51,19.05 C182.826032,17.6871793 182.913065,16.0643909 183.738871,14.7825421 C184.564678,13.5006933 186.006332,12.7505937 187.53,12.81 L187.53,12.83 Z M158.36,23 L165.19,23 C164.61,27.35 161.12,26.9 159.19,27.07 L154.5,27.07 L154.5,28.32 L159,28.32 C165.55,28.32 167.77,27.32 168.34,22.99 L197.62,22.99 C202.62,22.99 202.62,18.15 202.62,18.15 L202.57,3.87 L199.31,3.87 L199.31,18.3 C199.360314,19.1100288 199.060436,19.902675 198.486556,20.4765557 C197.912675,21.0504364 197.120029,21.3503138 196.31,21.3 L193,21.3 C194.615778,20.1075266 195.527857,18.1857808 195.43,16.18 C195.43,12.23 191.2,10.47 187.71,10.47 L187.35,10.47 C183.87,10.47 179.63,12.23 179.63,16.18 C179.537846,18.1841476 180.453484,20.1017336 182.07,21.29 L175.13,21.29 C175.828913,20.4334343 176.260176,19.390056 176.37,18.29 L176.37,10.57 L173.07,10.57 L173.07,18.42 C173.07,20.42 172.13,21.32 170.48,21.32 L168.48,21.32 C168.53,19.68 168.48,17.94 168.48,16.32 C168.48,12.8 164.89,10.49 160.48,10.49 C155.6,10.49 152.58,13.03 152.58,16.73 C152.540064,18.485274 153.270951,20.1699688 154.58,21.34 C155.652807,22.2474756 156.965907,22.8241278 158.36,23 L158.36,23 Z M205,83.83 L192.18,83.83 L192.18,65.55 L204.06,65.55 C214.42,65.55 221.33,67.11 221.33,74.73 C221.33,82.35 212.46,83.83 205,83.83 Z M192.34,43 L207.21,43 C215.37,43 219.49,45.54 219.49,50.55 C219.49,56.3 214.82,59.2 205.63,59.2 L192.34,59.2 L192.34,43 Z M219.15,62.14 C224.76,60.21 227.63,56.25 227.63,50.32 C227.63,41.32 220.57,36.62 207.21,36.62 L184,36.62 L184,90.2 L204.82,90.2 C220.93,90.2 229.43,84.78 229.43,74.51 C229.46,68.58 225.73,64.13 219.15,62.11 L219.15,62.14 Z M261,83.88 C247.63,83.88 241.63,73.26 241.63,62.75 C241.63,52.24 247.63,41.62 261,41.62 C274.37,41.62 280.36,52.24 280.36,62.75 C280.36,73.26 274.33,83.88 261,83.88 Z M280.54,83.31 C285.54,78.56 288.22,71.49 288.35,62.76 L288.35,62.34 C288.35,54.02 285.35,46.76 279.94,41.87 C275.19,37.58 268.63,35.31 261,35.31 C253.37,35.31 246.81,37.58 242,41.87 C236.48,46.87 233.49,54.26 233.6,62.76 C233.79,79.94 244,90.2 261,90.2 L288.35,90.2 L288.35,82.78 L280.54,83.31 Z M185.69,7.17 C186.138519,7.20583664 186.582813,7.0613352 186.924439,6.76851244 C187.266066,6.47568968 187.476818,6.05872355 187.51,5.61 C187.392411,4.69725916 186.615284,4.01382686 185.695,4.01382686 C184.774716,4.01382686 183.997589,4.69725916 183.88,5.61 C183.94935,6.52394206 184.734586,7.21601523 185.65,7.17 L185.69,7.17 Z M141.23,26.71 C141.377781,27.5973229 142.145455,28.247717 143.045,28.247717 C143.944545,28.247717 144.712219,27.5973229 144.86,26.71 C144.86,25.6965576 144.038442,24.8750003 143.025,24.8750003 C142.011558,24.8750003 141.19,25.6965576 141.19,26.71 L141.23,26.71 Z M167,80.35 L130.9,36.6 L120,36.6 L120,90.13 L129.47,90.13 L129.47,47.27 L165,90.13 L176.51,90.13 L176.51,36.6 L167,36.6 L167,80.35 Z M175.52,25.12 C174.582339,25.0681805 173.774565,25.7738728 173.7,26.71 C173.834059,27.6118007 174.608289,28.279445 175.52,28.279445 C176.431711,28.279445 177.205941,27.6118007 177.34,26.71 C177.265425,25.769758 176.451442,25.0625272 175.51,25.12 L175.52,25.12 Z M244.47,5.26 L242,5.26 C240,5.26 240,3.04 240,3.04 C240,3.04 240,1.68 242,1.68 L244.38,1.68 L244.38,0.28 L241.56,0.28 C237.19,0.28 237.19,2.96 237.19,2.96 C237.089826,3.9171148 237.559255,4.84423676 238.39,5.33 L235.71,5.33 L235.71,7.09 L244.46,7.09 L244.46,5.27 L244.47,5.26 Z M288.17,18.17 L288.17,10.5 L284.9,10.5 L284.9,18.32 C284.9,20.32 283.9,21.26 282.28,21.26 L278.58,21.26 C279.276404,20.4038409 279.701227,19.3591956 279.8,18.26 L279.8,10.69 L276.59,10.69 L276.59,18.4 C276.59,20.4 275.65,21.3 274.01,21.3 L270.36,21.3 C270.978722,20.4755793 271.343615,19.4886297 271.41,18.46 L271.41,3.87 L268,3.87 L268,18.3 C268,20.3 267,21.3 265.4,21.3 L253,21.3 L253,10.69 L249.81,10.69 L249.81,23 L282.98,23 C285.738335,23.1012905 288.056972,20.9482702 288.16,18.19 L288.17,18.17 Z M282.17,26.69 C282.06574,27.4502439 282.444232,28.1953676 283.119661,28.5595618 C283.795089,28.923756 284.625617,28.8305418 285.203508,28.3256816 C285.781398,27.8208215 285.985296,27.0103333 285.715102,26.2921162 C285.444907,25.5738991 284.757359,25.0987749 283.99,25.1 C283.047108,25.05456 282.243789,25.7775472 282.19,26.72 L282.17,26.69 Z M271.36,18.17 C271.363819,18.2466191 271.363819,18.3233809 271.36,18.4 C271.37,20 271.37,18.58 271.37,18.2 L271.36,18.17 Z M278.03,7.17 C278.654481,7.26967606 279.279081,6.99218468 279.623715,6.46195887 C279.968349,5.93173307 279.968349,5.24826693 279.623715,4.71804113 C279.279081,4.18781532 278.654481,3.91032394 278.03,4.01 C277.423874,3.93611042 276.828978,4.21585856 276.499285,4.72981489 C276.169592,5.24377122 276.163351,5.90113014 276.483227,6.42125326 C276.803103,6.94137639 277.39258,7.23236857 278,7.17 L278.03,7.17 Z M271.36,18.11 L271.36,18.19 C271.368018,18.1641301 271.371403,18.1370474 271.37,18.11 L271.36,18.11 Z M264.06,5.36 L261.55,5.36 C259.55,5.36 259.55,3.13 259.55,3.13 C259.55,3.13 259.55,1.78 261.55,1.78 L264,1.78 L264,0.39 L261.16,0.39 C256.81,0.39 256.81,3.07 256.81,3.07 C256.713971,4.02653423 257.177155,4.95290251 258,5.45 L255.35,5.45 L255.35,7.21 L264.12,7.21 L264.12,5.41 L264.06,5.36 Z M209.06,3.83 L205.77,3.83 L205.77,22.95 L209.09,22.95 L209.09,3.84 L209.06,3.83 Z M190.06,7.16 C190.994359,7.22913846 191.810369,6.53352312 191.89,5.6 C191.772058,4.68198769 190.990558,3.99446748 190.065,3.99446748 C189.139442,3.99446748 188.357942,4.68198769 188.24,5.6 C188.275456,6.05790782 188.493621,6.48230433 188.845367,6.77762036 C189.197113,7.07293639 189.652867,7.21434406 190.11,7.17 L190.06,7.16 Z M228.49,11.91 C230.362968,11.8488927 232.085777,12.9300747 232.845271,14.6432334 C233.604765,16.356392 233.2491,18.3590227 231.946148,19.7058936 C230.643197,21.0527645 228.653453,21.4746013 226.916066,20.7722992 C225.178679,20.069997 224.040997,18.3839642 224.04,16.51 C224.021288,15.3025992 224.48648,14.137911 225.331848,13.2756353 C226.177216,12.4133597 227.332465,11.9251981 228.54,11.92 L228.49,11.91 Z M217.25,28.18 L217.25,24.11 C217.261732,23.7614994 217.418499,23.43374 217.682445,23.2058735 C217.94639,22.978007 218.293518,22.8707484 218.64,22.91 C221.13,22.91 223.86,23.49 223.86,20.58 C225.226567,21.9785314 227.051397,22.8376927 229,23 C233.35,23 236.27,20.54 236.27,16.65 C236.27,12.53 232.8,10.41 228.48,10.41 C223.38,10.41 220.58,13.26 220.58,17.71 L220.58,18.98 C220.58,20.79 220.73,21.22 218.77,21.22 L218,21.22 C217.085242,21.1337092 216.175774,21.4315339 215.489249,22.0421997 C214.802725,22.6528655 214.400922,23.5214188 214.38,24.44 L214.38,28.22 L217.33,28.22 L217.25,28.18 Z M242.16,23 L242.16,10.6 L238.84,10.6 L238.84,23 L242.2,23 L242.16,23 Z"/>
+        <path fill="#ED1C29" d="M76.08,0.26 L76.08,90.2 L98.27,90.2 L98.27,0.26 L76.08,0.26 Z M0.71,90.2 L49.49,90.2 L49.49,0.26 L0.71,0.26 L0.71,90.2 Z"/>
+      </svg>
+    </a>
+    <div class="header-tools">
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button type="button" id="btn-en" class="active" data-lang="en">English</button>
+        <button type="button" id="btn-ar" data-lang="ar">العربية</button>
+      </div>
+      <button type="button" class="icon-btn" id="btnFullscreen" title="Full screen" aria-label="Toggle full screen">&#9723;</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div class="shell">
+      <!-- Info rail: the old hero + "How can we help" block -->
+      <aside class="rail">
+        <div class="rail-main">
+        <div class="rail-copy">
+          <h1 data-i18n="hero">Contact Us</h1>
+          <div class="tagline" data-i18n="hero_sub">Suggestions, complaints and inquiries</div>
+        </div>
+        <div class="rule" aria-hidden="true"></div>
+        <div class="rail-copy">
+          <h2 data-i18n="help_title">How can we help you?</h2>
+          <p class="detail" data-i18n="help_1">We are always available for you at your convenience.</p>
+          <p class="detail" data-i18n="help_3">Fill in the form and we will get back to you within two business days.</p>
+        </div>
+        </div>
+        <div class="rail-call">
+          <span class="lbl" data-i18n="urgent">Urgent? Call us</span>
+          <a href="tel:600565656" dir="ltr">600 56 56 56</a>
+        </div>
+      </aside>
+
+      <!-- Form -->
+      <section class="form-side">
+        <div class="form-panel" id="formPanel">
+          <div class="form-head">
+            <div class="form-title" data-i18n="form_title">Contact Form</div>
+            <div class="form-note"><span class="req">*</span> <span data-i18n="mandatory">Only the message is required – everything else is optional, so you may submit anonymously</span></div>
+          </div>
+
+          <form id="contactForm" novalidate>
+            <div class="grid">
+              <!-- Radios -->
+              <div class="field" role="radiogroup" aria-labelledby="lbl-newCustomer">
+                <span class="group-label" id="lbl-newCustomer" data-i18n="new_customer">New Customer</span>
+                <div class="radio-opts">
+                  <label><input type="radio" name="newCustomer" value="Yes" checked /> <span data-i18n="yes">Yes</span></label>
+                  <label><input type="radio" name="newCustomer" value="No" /> <span data-i18n="no">No</span></label>
+                </div>
+                <div class="meta"></div>
+              </div>
+
+              <div class="field" role="radiogroup" aria-labelledby="lbl-needCallback">
+                <span class="group-label" id="lbl-needCallback" data-i18n="need_callback">Need Callback</span>
+                <div class="radio-opts">
+                  <label><input type="radio" name="needCallback" value="Yes" checked /> <span data-i18n="yes">Yes</span></label>
+                  <label><input type="radio" name="needCallback" value="No" /> <span data-i18n="no">No</span></label>
+                </div>
+                <div class="meta"></div>
+              </div>
+
+              <!-- Account -->
+              <div class="field">
+                <label for="account"><span data-i18n="label_account">Account</span> <span class="opt" data-i18n="optional">(optional)</span></label>
+                <input type="text" id="account" name="account" autocomplete="off" />
+                <div class="meta"></div>
+              </div>
+
+              <!-- Title - kept immediately before Full Name, since the honorific
+                   belongs with the name rather than with the account number. -->
+              <div class="field">
+                <label for="title"><span data-i18n="label_title">Title</span> <span class="opt" data-i18n="optional">(optional)</span></label>
+                <select id="title" name="title">
+                  <option value="" data-i18n="select_title">- Select Title -</option>
+                  <option value="HH">HH</option>
+                  <option value="Sheikh">Sheikh</option>
+                  <option value="Sheikha">Sheikha</option>
+                  <option value="Dr">Dr</option>
+                  <option value="Ms">Ms</option>
+                  <option value="Mr">Mr</option>
+                  <option value="Mrs">Mrs</option>
+                  <option value="Prof">Prof</option>
+                  <option value="Other">Other</option>
+                </select>
+                <div class="meta"></div>
+              </div>
+
+              <!-- Full name -->
+              <div class="field">
+                <label for="fullName"><span data-i18n="label_name">Full Name</span> <span class="opt" data-i18n="optional">(optional)</span></label>
+                <input type="text" id="fullName" name="fullName" autocomplete="name" />
+                <div class="meta"></div>
+              </div>
+
+              <!-- Email -->
+              <div class="field">
+                <label for="email"><span data-i18n="label_email">E-mail</span> <span class="opt" data-i18n="optional">(optional)</span></label>
+                <input type="email" id="email" name="email" autocomplete="email" />
+                <div class="meta"><span class="err" id="err-email" data-i18n="err_email">Please enter a valid email address.</span></div>
+              </div>
+
+              <!-- Mobile -->
+              <div class="field">
+                <label for="mobile"><span data-i18n="label_mobile">Mobile Number</span> <span class="opt" data-i18n="optional">(optional)</span></label>
+                <div class="mobile-wrap" id="mobileWrap">
+                  <span class="mobile-prefix">971</span>
+                  <input type="tel" id="mobile" name="mobile" inputmode="numeric" placeholder="5X XXX XXXX" />
+                </div>
+                <div class="meta"><span class="err" id="err-mobile" data-i18n="err_mobile">Please enter a valid mobile number.</span></div>
+              </div>
+
+              <!-- Subject -->
+              <div class="field">
+                <label for="subject"><span data-i18n="label_subject">Subject</span></label>
+                <select id="subject" name="subject">
+                  <option value="" data-i18n="select_subject">- Select Subject -</option>
+                  <option value="Feedback">Feedback</option>
+                  <option value="Suggestion" selected>Suggestion</option>
+                  <option value="Inquiry">Inquiry</option>
+                  <option value="Complaint">Complaint</option>
+                  <option value="Appreciation">Appreciation</option>
+                </select>
+                <div class="meta"></div>
+              </div>
+            </div>
+
+            <!-- Message fills the remaining height -->
+            <div class="msg-row">
+              <div class="field grow">
+                <label for="message"><span data-i18n="label_message">Message</span> <span class="req">*</span></label>
+                <textarea id="message" name="message" maxlength="2000" required></textarea>
+                <div class="meta">
+                  <span class="count"><span id="charCount">0</span> / 2000</span>
+                  <span class="err" id="err-message" data-i18n="err_message">Please enter your message.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="btn-send" id="submitBtn">
+                <span class="spinner"></span>
+                <span class="btn-text" data-i18n="btn_send">Send</span>
+                <span aria-hidden="true">&rsaquo;</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="success-panel" id="successPanel">
+          <div class="success-icon">&#10003;</div>
+          <h2 data-i18n="success_title">Thank you for your message</h2>
+          <p data-i18n="success_msg">We will get in touch with you shortly.</p>
+          <button type="button" class="btn-again" id="btnAgain" data-i18n="btn_again">Send another message</button>
+          <div class="auto-reset" id="autoReset"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span data-i18n="footer">National Bank of Umm Al Qaiwain (P.S.C), is Licensed by the Central Bank of the UAE</span>
+    <span>
+      <a href="https://nbq.ae/" target="_blank" rel="noopener">nbq.ae</a>
+      &middot;
+      <a href="tel:600565656" dir="ltr">600 56 56 56</a>
+    </span>
+    <span class="proto-badge">PROTOTYPE &middot; Mirrors nbq.ae/general/contact &middot; No data stored</span>
+  </footer>
+
+  <script>
+    const i18n = {
+      en: {
+        hero: 'Contact Us',
+        hero_sub: 'Suggestions, complaints and inquiries',
+        help_title: 'How can we help you?',
+        help_1: 'We are always available for you at your convenience.',
+        help_3: 'Fill in the form and we will get back to you within two business days.',
+        urgent: 'Urgent? Call us',
+        form_title: 'Contact Form',
+        mandatory: 'Only the message is required – everything else is optional, so you may submit anonymously',
+        optional: '(optional)',
+        err_message: 'Please enter your message.',
+        new_customer: 'New Customer',
+        need_callback: 'Need Callback',
+        yes: 'Yes',
+        no: 'No',
+        label_title: 'Title',
+        select_title: '- Select Title -',
+        label_account: 'Account',
+        label_name: 'Full Name',
+        label_email: 'E-mail',
+        label_mobile: 'Mobile Number',
+        label_subject: 'Subject',
+        select_subject: '- Select Subject -',
+        label_message: 'Message',
+        btn_send: 'Send',
+        err_email: 'Please enter a valid email address.',
+        err_mobile: 'Please enter a valid mobile number.',
+        success_title: 'Thank you for your message',
+        success_msg: 'We will get in touch with you shortly.',
+        btn_again: 'Send another message',
+        footer: 'National Bank of Umm Al Qaiwain (P.S.C), is Licensed by the Central Bank of the UAE',
+        auto_reset: 'Returning to the form in {s}s…'
+      },
+      ar: {
+        hero: 'اتصل بنا',
+        hero_sub: 'اقتراحات وشكاوى واستفسارات',
+        help_title: 'كيف يمكننا مساعدتك؟',
+        help_1: 'نحن متاحون دائماً لخدمتك في الوقت المناسب لك.',
+        help_3: 'يرجى تعبئة النموذج وسنعاود الاتصال بك خلال يومي عمل.',
+        urgent: 'حالة عاجلة؟ اتصل بنا',
+        form_title: 'نموذج الاتصال',
+        mandatory: 'الرسالة فقط إلزامية – وباقي الحقول اختيارية، ويمكنك الإرسال بشكل مجهول',
+        optional: '(اختياري)',
+        err_message: 'يرجى إدخال رسالتك.',
+        new_customer: 'عميل جديد',
+        need_callback: 'طلب اتصال معاود',
+        yes: 'نعم',
+        no: 'لا',
+        label_title: 'اللقب',
+        select_title: '- اختر اللقب -',
+        label_account: 'رقم الحساب',
+        label_name: 'الاسم الكامل',
+        label_email: 'البريد الإلكتروني',
+        label_mobile: 'رقم الجوال',
+        label_subject: 'الموضوع',
+        select_subject: '- اختر الموضوع -',
+        label_message: 'الرسالة',
+        btn_send: 'إرسال',
+        err_email: 'يرجى إدخال بريد إلكتروني صحيح.',
+        err_mobile: 'يرجى إدخال رقم جوال صحيح.',
+        success_title: 'شكراً لرسالتك',
+        success_msg: 'سنتواصل معك قريباً.',
+        btn_again: 'إرسال رسالة أخرى',
+        footer: 'بنك أم القيوين الوطني (ش.م.ع) مرخّص من مصرف الإمارات العربية المتحدة المركزي',
+        auto_reset: 'العودة إلى النموذج بعد {s} ثانية…'
+      }
+    };
+
+    let currentLang = 'en';
+
+    function applyLang(lang) {
+      currentLang = lang;
+      const d = i18n[lang];
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.body.classList.toggle('rtl', lang === 'ar');
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (d[key]) el.textContent = d[key];
+      });
+      // Update the placeholder options of the two selects
+      const titleOpt = document.querySelector('#title option[value=""]');
+      if (titleOpt) titleOpt.textContent = d.select_title;
+      const subOpt = document.querySelector('#subject option[value=""]');
+      if (subOpt) subOpt.textContent = d.select_subject;
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-ar').classList.toggle('active', lang === 'ar');
+    }
+
+    document.getElementById('btn-en').addEventListener('click', () => applyLang('en'));
+    document.getElementById('btn-ar').addEventListener('click', () => applyLang('ar'));
+
+    /* ---------- Kiosk: full-screen toggle ---------- */
+    document.getElementById('btnFullscreen').addEventListener('click', () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    });
+
+    document.getElementById('message').addEventListener('input', e => {
+      document.getElementById('charCount').textContent = e.target.value.length;
+    });
+
+    function showErr(id, show) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('show', show);
+      const fieldId = id.replace('err-', '');
+      const input = document.getElementById(fieldId);
+      if (input) input.classList.toggle('error', show);
+      if (fieldId === 'mobile') {
+        document.getElementById('mobileWrap').classList.toggle('error', show);
+      }
+    }
+
+    function validateEmail(v) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+    }
+
+    function validateMobile(v) {
+      const c = v.replace(/[\s\-]/g, '');
+      return /^5[0-9]{8}$/.test(c) || /^[0-9]{8,12}$/.test(c);
+    }
+
+    function validate() {
+      let ok = true;
+      let firstInvalid = null;
+      const email = document.getElementById('email').value.trim();
+      const mobile = document.getElementById('mobile').value.trim();
+      const message = document.getElementById('message').value.trim();
+
+      // Message is the only required field; the form may be submitted anonymously.
+      if (!message) { showErr('err-message', true); ok = false; firstInvalid = 'message'; }
+      else showErr('err-message', false);
+
+      // Optional fields: only a value that IS present has to be well formed.
+      if (email && !validateEmail(email)) { showErr('err-email', true); ok = false; firstInvalid = firstInvalid || 'email'; }
+      else showErr('err-email', false);
+
+      if (mobile && !validateMobile(mobile)) { showErr('err-mobile', true); ok = false; firstInvalid = firstInvalid || 'mobile'; }
+      else showErr('err-mobile', false);
+
+      if (firstInvalid) document.getElementById(firstInvalid).focus();
+      return ok;
+    }
+
+    function isAnonymous() {
+      return !['fullName', 'email', 'mobile', 'account'].some(
+        id => document.getElementById(id).value.trim()
+      );
+    }
+
+    const form = document.getElementById('contactForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const successPanel = document.getElementById('successPanel');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validate()) return;
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('loading');
+
+      const mobileDigits = document.getElementById('mobile').value.replace(/[\s\-]/g, '');
+
+      const payload = {
+        newCustomer: form.querySelector('input[name="newCustomer"]:checked').value,
+        needCallback: form.querySelector('input[name="needCallback"]:checked').value,
+        account: document.getElementById('account').value.trim() || null,
+        title: document.getElementById('title').value || null,
+        fullName: document.getElementById('fullName').value.trim() || null,
+        email: document.getElementById('email').value.trim() || null,
+        // Only prefix the country code when a number was actually entered,
+        // otherwise a blank field would post a bare "971".
+        mobile: mobileDigits ? '971' + mobileDigits : null,
+        subject: document.getElementById('subject').value || null,
+        message: document.getElementById('message').value.trim(),
+        anonymous: isAnonymous(),
+        language: currentLang,
+        submittedAt: new Date().toISOString(),
+        source: 'Contact Form Prototype (kiosk, mirrors nbq.ae/general/contact)'
+      };
+
+      console.log('Payload for ESB/CRM API:', payload);
+      await new Promise(r => setTimeout(r, 900));
+
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+      document.getElementById('formPanel').classList.add('hide');
+      successPanel.classList.add('show');
+      startSuccessCountdown();
+    });
+
+    function resetForm() {
+      form.reset();
+      document.getElementById('subject').value = 'Suggestion';
+      document.getElementById('charCount').textContent = '0';
+      ['err-message', 'err-email', 'err-mobile'].forEach(id => showErr(id, false));
+      successPanel.classList.remove('show');
+      document.getElementById('formPanel').classList.remove('hide');
+    }
+
+    document.getElementById('btnAgain').addEventListener('click', () => {
+      stopSuccessCountdown();
+      resetForm();
+    });
+
+    /* ---------- Kiosk hygiene ----------
+       Shared screen: clear the confirmation automatically, and wipe a
+       half-typed form (it holds name / email / mobile / account) after idle. */
+    const AUTO_RESET_SECONDS = 15;
+    const IDLE_RESET_MS = 120000;
+    const autoResetEl = document.getElementById('autoReset');
+    let countdownTimer = null;
+    let idleTimer = null;
+
+    function startSuccessCountdown() {
+      let left = AUTO_RESET_SECONDS;
+      const tick = () => {
+        autoResetEl.textContent = i18n[currentLang].auto_reset.replace('{s}', left);
+        if (left-- <= 0) { stopSuccessCountdown(); resetForm(); }
+      };
+      tick();
+      countdownTimer = setInterval(tick, 1000);
+    }
+
+    function stopSuccessCountdown() {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+      autoResetEl.textContent = '';
+    }
+
+    function touchIdle() {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        if (!successPanel.classList.contains('show')) {
+          resetForm();
+          applyLang('en');
+        }
+      }, IDLE_RESET_MS);
+    }
+
+    ['pointerdown', 'keydown', 'input'].forEach(ev =>
+      document.addEventListener(ev, touchIdle, { passive: true })
+    );
+
+    // Pre-select the subject when opened like the live URL
+    const params = new URLSearchParams(location.search);
+    if (params.get('subject')) {
+      const s = params.get('subject');
+      const map = { suggestion: 'Suggestion', complaint: 'Complaint', feedback: 'Feedback', inquiry: 'Inquiry', appreciation: 'Appreciation' };
+      const val = map[s.toLowerCase()] || s;
+      if ([...document.getElementById('subject').options].some(o => o.value === val)) {
+        document.getElementById('subject').value = val;
+      }
+    }
+
+    applyLang('en');
+    touchIdle();
+
+    /* ---------- No-scroll guard ----------
+       The layout is sized to fit the viewport, so the scrollbar is hidden.
+       Reveal it only if the content genuinely cannot fit. */
+    (function () {
+      const scroller = document.querySelector('.form-side');
+      const sync = () => scroller.classList.toggle('scrollable', scroller.scrollHeight - scroller.clientHeight > 2);
+      if (window.ResizeObserver) {
+        const ro = new ResizeObserver(sync);
+        ro.observe(scroller);
+        [...scroller.children].forEach(c => ro.observe(c));
+      }
+      window.addEventListener('resize', sync);
+      window.addEventListener('orientationchange', sync);
+      sync();
+    })();
+
+  </script>
+</body>
+</html>

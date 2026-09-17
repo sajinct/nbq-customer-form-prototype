@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="robots" content="noindex, nofollow" />
+  <!-- Prototype for review, not an official NBQ service: keep it out of search results. -->
+  <title>NBQ | Suggestions &amp; Complaints</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ============================================================
+       NBQ Suggestions & Complaints - KIOSK / FULL-SCREEN BUILD
+
+       Layout rule: the page never scrolls. The viewport is split into
+       header / stage / footer, and every dimension derives from --fs,
+       a viewport-linked type scale, so the whole form shrinks or grows
+       to fit the screen instead of overflowing it.
+       ============================================================ */
+
+    :root {
+      /* Brand palette derived from the official logo (nbq-logo.svg):
+         blue #0072BC and red #ED1C29. The darker stops are the same hues
+         scaled down, so gradients and hovers stay on-brand. */
+      --nbq-blue: #0072BC;        /* logo blue - primary */
+      --nbq-blue-mid: #005B96;    /* hover */
+      --nbq-blue-dark: #004A7A;   /* active / gradient */
+      --nbq-blue-deep: #003B62;   /* deepest gradient stop */
+      --nbq-red: #ED1C29;         /* logo red - rules, accents, error borders */
+      --nbq-red-deep: #C71520;    /* same hue, darkened: small red TEXT (4.4:1 -> 5.9:1 on white) */
+      --bg: #F4F6F9;
+      --card: #FFFFFF;
+      --text: #1A1A1A;
+      --text-muted: #5A6570;
+      --border: #D8DEE6;
+      --success: #0B7A4B;
+      --error: var(--nbq-red-deep);
+
+      /* Master scale: the smallest viewport side drives every size below. */
+      --fs: clamp(12px, 1.6vmin, 18px);
+      --gap: calc(var(--fs) * 0.85);
+      --pad: calc(var(--fs) * 1.6);
+      --radius: calc(var(--fs) * 0.55);
+      --shadow: 0 calc(var(--fs) * 0.5) calc(var(--fs) * 1.9) rgba(0, 74, 122, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+      font-size: var(--fs);
+      line-height: 1.4;
+      background: var(--bg);
+      color: var(--text);
+      height: 100dvh;
+      overflow: hidden;                   /* no page scrollbar, ever */
+      display: flex;
+      flex-direction: column;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body.rtl {
+      font-family: 'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif;
+      direction: rtl;
+    }
+
+    /* ---------------- Header ---------------- */
+    .header {
+      flex: 0 0 auto;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: calc(var(--fs) * 0.6) var(--pad);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--gap);
+    }
+
+    .logo { display: flex; align-items: center; text-decoration: none; }
+    .logo-mark { height: calc(var(--fs) * 2.6); width: auto; display: block; }
+
+    .header-tools { display: flex; align-items: center; gap: var(--gap); }
+
+    .lang-toggle {
+      display: flex;
+      gap: calc(var(--fs) * 0.2);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: calc(var(--fs) * 0.18);
+    }
+
+    .lang-toggle button {
+      border: none;
+      background: transparent;
+      padding: calc(var(--fs) * 0.42) calc(var(--fs) * 0.95);
+      border-radius: 999px;
+      font-size: calc(var(--fs) * 0.85);
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-family: inherit;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .lang-toggle button.active { background: var(--nbq-blue); color: #fff; }
+
+    .icon-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--nbq-blue);
+      width: calc(var(--fs) * 2.2);
+      height: calc(var(--fs) * 2.2);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: calc(var(--fs) * 1.05);
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      font-family: inherit;
+    }
+
+    .icon-btn:hover { background: var(--bg); }
+
+    /* ---------------- Stage (fills the leftover height) ---------------- */
+    .stage {
+      flex: 1 1 auto;
+      min-height: 0;                      /* lets children shrink instead of overflow */
+      display: flex;
+      flex-direction: column;
+      padding: var(--gap) var(--pad);
+      overflow: hidden;
+    }
+
+    .card {
+      margin: auto;                       /* centres correctly even when scrolling */
+      width: 100%;
+      max-width: calc(var(--fs) * 40);
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--card);
+      border-radius: calc(var(--radius) * 1.6);
+      border: 1px solid rgba(0, 114, 188, 0.09);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-header {
+      flex: 0 0 auto;
+      background: linear-gradient(135deg, var(--nbq-blue) 0%, var(--nbq-blue-dark) 100%);
+      color: #fff;
+      padding: calc(var(--fs) * 1.25) var(--pad) calc(var(--fs) * 1.1);
+      border-bottom: calc(var(--fs) * 0.2) solid var(--nbq-red);
+    }
+
+    .card-header h1 { font-size: calc(var(--fs) * 1.4); font-weight: 700; margin-bottom: calc(var(--fs) * 0.2); }
+    .card-header p { font-size: calc(var(--fs) * 0.9); opacity: 0.9; }
+
+
+    /* Scroll fallback lives on the content column, because .card clips its
+       own overflow for the rounded corners. It is hidden while everything
+       fits; the no-scroll guard reveals it only when it genuinely cannot
+       (tiny screen, on-screen keyboard) - better a visible scrollbar than
+       content stranded behind an invisible one. */
+    .card-body {
+      overflow-y: auto;
+      scrollbar-width: none;
+      overscroll-behavior: contain;
+    }
+
+    .card-body::-webkit-scrollbar { width: 0; height: 0; }
+    .card-body.scrollable { scrollbar-width: thin; scrollbar-color: #B9C3CE transparent; }
+    .card-body.scrollable::-webkit-scrollbar { width: calc(var(--fs) * 0.65); }
+    .card-body.scrollable::-webkit-scrollbar-thumb { background: #B9C3CE; border-radius: 999px; }
+
+    .card-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: var(--pad);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-panel {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+    }
+
+    /* Email + mobile share a row once there is width for it. */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--gap);
+    }
+
+    .form-group { display: flex; flex-direction: column; min-height: 0; }
+
+    .form-group label {
+      font-size: calc(var(--fs) * 0.82);
+      font-weight: 600;
+      color: var(--nbq-blue);
+      margin-bottom: calc(var(--fs) * 0.35);
+      letter-spacing: 0.01em;
+    }
+
+    .form-group label .req { color: var(--nbq-red-deep); margin-inline-start: 2px; }
+
+    .form-group label .opt {
+      color: var(--text-muted);
+      font-weight: 400;
+      font-size: calc(var(--fs) * 0.92);
+      margin-inline-start: calc(var(--fs) * 0.2);
+    }
+
+    .anon-note {
+      flex: 0 0 auto;
+      font-size: calc(var(--fs) * 0.78);
+      color: var(--text-muted);
+      background: rgba(0, 114, 188, 0.06);
+      border-inline-start: calc(var(--fs) * 0.18) solid var(--nbq-blue);
+      border-radius: calc(var(--radius) * 0.5);
+      padding: calc(var(--fs) * 0.45) calc(var(--fs) * 0.7);
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: calc(var(--fs) * 0.7) calc(var(--fs) * 0.85);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: calc(var(--fs) * 1);
+      font-family: inherit;
+      color: var(--text);
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+      min-height: calc(var(--fs) * 2.6);  /* touch target */
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--nbq-blue);
+      box-shadow: 0 0 0 3px rgba(0, 114, 188, 0.18);
+    }
+
+    .form-group input.error,
+    .form-group textarea.error {
+      border-color: var(--nbq-red);
+      box-shadow: 0 0 0 3px rgba(237, 28, 41, 0.15);
+    }
+
+    /* The message field absorbs all remaining vertical space. */
+    .form-group.grow { flex: 1 1 auto; }
+
+    .form-group.grow textarea {
+      flex: 1 1 auto;
+      min-height: calc(var(--fs) * 4.5);
+      resize: none;                       /* resizing would break the fixed layout */
+    }
+
+    .meta-line {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--gap);
+      margin-top: calc(var(--fs) * 0.3);
+      min-height: calc(var(--fs) * 1.1);  /* reserved, so errors never shift layout */
+    }
+
+    .hint { font-size: calc(var(--fs) * 0.75); color: var(--text-muted); }
+    .error-msg { font-size: calc(var(--fs) * 0.75); color: var(--error); visibility: hidden; }
+    .error-msg.show { visibility: visible; }
+
+    .type-options { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--fs) * 0.6); }
+    .type-option { position: relative; }
+    .type-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+    .type-option label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: calc(var(--fs) * 0.45);
+      padding: calc(var(--fs) * 0.7);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: calc(var(--fs) * 0.95);
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+      margin: 0;
+      min-height: calc(var(--fs) * 2.6);
+    }
+
+    .type-option input:checked + label {
+      border-color: var(--nbq-blue);
+      background: rgba(0, 114, 188, 0.09);
+      color: var(--nbq-blue);
+      font-weight: 600;
+    }
+
+    .type-option input:focus-visible + label { box-shadow: 0 0 0 3px rgba(0, 114, 188, 0.28); }
+    .type-option label:hover { border-color: var(--nbq-blue); }
+
+    .btn-submit {
+      flex: 0 0 auto;
+      width: 100%;
+      padding: calc(var(--fs) * 0.85) calc(var(--fs) * 1.2);
+      background: var(--nbq-blue);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: calc(var(--fs) * 1.1);
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      min-height: calc(var(--fs) * 3);
+    }
+
+    .btn-submit:hover { background: var(--nbq-blue-mid); }
+    .btn-submit:active { transform: scale(0.99); }
+    .btn-submit:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    .btn-submit .spinner {
+      display: none;
+      width: calc(var(--fs) * 1);
+      height: calc(var(--fs) * 1);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-inline-end: calc(var(--fs) * 0.5);
+      vertical-align: middle;
+    }
+
+    .btn-submit.loading .spinner { display: inline-block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---------------- Success ---------------- */
+    .success-panel {
+      display: none;
+      flex: 1 1 auto;
+      min-height: 0;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: calc(var(--fs) * 0.6);
+    }
+
+    .success-panel.show { display: flex; }
+    .form-panel.hide { display: none; }
+
+    .success-icon {
+      width: calc(var(--fs) * 3.6);
+      height: calc(var(--fs) * 3.6);
+      border-radius: 50%;
+      background: rgba(11, 122, 75, 0.12);
+      color: var(--success);
+      display: grid;
+      place-items: center;
+      font-size: calc(var(--fs) * 1.9);
+    }
+
+    .success-panel h2 { font-size: calc(var(--fs) * 1.3); color: var(--nbq-blue); }
+    .success-panel p { color: var(--text-muted); font-size: calc(var(--fs) * 0.9); max-width: calc(var(--fs) * 24); }
+
+    .btn-again {
+      background: transparent;
+      border: 1.5px solid var(--nbq-blue);
+      color: var(--nbq-blue);
+      padding: calc(var(--fs) * 0.6) calc(var(--fs) * 1.4);
+      border-radius: var(--radius);
+      font-size: calc(var(--fs) * 0.95);
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: calc(var(--fs) * 2.6);
+    }
+
+    .btn-again:hover { background: var(--nbq-blue); color: #fff; }
+    .auto-reset { font-size: calc(var(--fs) * 0.75); color: var(--text-muted); min-height: calc(var(--fs) * 1.1); }
+
+    /* ---------------- Footer ---------------- */
+    .footer {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: calc(var(--fs) * 0.5);
+      padding: calc(var(--fs) * 0.5) var(--pad);
+      font-size: calc(var(--fs) * 0.72);
+      color: var(--text-muted);
+      background: #fff;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .footer a { color: var(--nbq-blue); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    .proto-badge {
+      background: #E9EDF2;
+      color: #46505A;
+      border-radius: 999px;
+      padding: calc(var(--fs) * 0.15) calc(var(--fs) * 0.6);
+      font-size: calc(var(--fs) * 0.68);
+      white-space: nowrap;
+    }
+
+    /* ---------------- Adaptive layout ---------------- */
+
+    /* Wide / landscape kiosk: email and mobile sit side by side, so the
+       message box takes the rest of the screen. */
+    @media (min-width: 720px) and (min-aspect-ratio: 1/1) {
+      .card { max-width: calc(var(--fs) * 54); }
+      .field-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Short viewports: shed decoration before shrinking the form. */
+    @media (max-height: 560px) {
+      :root { --pad: calc(var(--fs) * 1.1); --gap: calc(var(--fs) * 0.6); }
+      .card-header { padding: calc(var(--fs) * 0.8) var(--pad); }
+      .card-header p { display: none; }
+      .footer { display: none; }
+    }
+
+    @media (max-width: 520px) {
+      :root { --pad: calc(var(--fs) * 1.1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a class="logo" href="https://nbq.ae/" target="_blank" rel="noopener"
+       aria-label="NBQ – National Bank of Umm Al Qaiwain">
+      <!-- Official NBQ logo, taken from nbq.ae/ResourcePackages/Theme/dist/images/icons.svg (#icon-logo).
+           Inlined so each prototype stays a single self-contained file; nbq-logo.svg holds the same asset. -->
+      <svg class="logo-mark" viewBox="0 0 289 91" aria-hidden="true" focusable="false">
+        <path fill="#0072BC" d="M130,28.26 C136.64,28.26 138.88,27.31 139.39,22.96 L144.07,22.96 C145.394792,23.022467 146.690128,22.5560312 147.670975,21.6633293 C148.651822,20.7706274 149.237811,19.5248056 149.3,18.2 L149.3,10.53 L146.02,10.53 L146.02,18.35 C146.02,20.35 145.02,21.29 143.4,21.29 L139.57,21.29 L139.57,10.52 L136.21,10.52 L136.21,20.27 C136.21,26.75 132.63,26.91 130.46,26.9 L130,26.9 C128,26.9 123.8,27.29 123.8,20.28 L123.8,10.53 L120.43,10.53 L120.43,20.53 C120.42,26 122.15,28.25 130,28.26 Z M129.67,7.17 C130.587672,7.20652101 131.37572,6.52354647 131.47,5.61 C131.405768,4.67550868 130.605577,3.96422786 129.67,4.01 C129.06258,3.94763143 128.473103,4.23862361 128.153227,4.75874674 C127.833351,5.27886986 127.839592,5.93622878 128.169285,6.45018511 C128.498978,6.96414144 129.093874,7.24388958 129.7,7.17 L129.67,7.17 Z M169.2,26.71 C169.333651,27.6065688 170.103524,28.2701852 171.01,28.2701852 C171.916476,28.2701852 172.686349,27.6065688 172.82,26.71 C172.673133,25.8330699 171.914144,25.1906244 171.025,25.1906244 C170.135856,25.1906244 169.376867,25.8330699 169.23,26.71 L169.2,26.71 Z M145.61,26.71 C145.744059,27.6118007 146.518289,28.279445 147.43,28.279445 C148.341711,28.279445 149.115941,27.6118007 149.25,26.71 C149.069758,25.8597471 148.319147,25.2515757 147.45,25.2515757 C146.580853,25.2515757 145.830242,25.8597471 145.65,26.71 L145.61,26.71 Z M160.28,12 L160.68,12 C161.936478,11.9542866 163.153196,12.4446365 164.026856,13.3488181 C164.900517,14.2529997 165.348815,15.4858312 165.26,16.74 L165.26,17.74 L165.26,17.74 L165.26,20.81 L165.26,20.81 L165.26,21.27 L159.53,21.27 C156.96,21.01 156.14,18.99 156.14,16.81 C156.15,14.07 157.13,12 160.28,12 Z M187.53,12.83 C189.966173,12.8241459 191.956309,14.7742117 192,17.21 C191.99175,17.8483925 191.841446,18.4769369 191.56,19.05 C191.155285,19.8961212 190.591732,20.656579 189.9,21.29 L185.17,21.29 C184.478453,20.6564121 183.914928,19.8959926 183.51,19.05 C182.826032,17.6871793 182.913065,16.0643909 183.738871,14.7825421 C184.564678,13.5006933 186.006332,12.7505937 187.53,12.81 L187.53,12.83 Z M158.36,23 L165.19,23 C164.61,27.35 161.12,26.9 159.19,27.07 L154.5,27.07 L154.5,28.32 L159,28.32 C165.55,28.32 167.77,27.32 168.34,22.99 L197.62,22.99 C202.62,22.99 202.62,18.15 202.62,18.15 L202.57,3.87 L199.31,3.87 L199.31,18.3 C199.360314,19.1100288 199.060436,19.902675 198.486556,20.4765557 C197.912675,21.0504364 197.120029,21.3503138 196.31,21.3 L193,21.3 C194.615778,20.1075266 195.527857,18.1857808 195.43,16.18 C195.43,12.23 191.2,10.47 187.71,10.47 L187.35,10.47 C183.87,10.47 179.63,12.23 179.63,16.18 C179.537846,18.1841476 180.453484,20.1017336 182.07,21.29 L175.13,21.29 C175.828913,20.4334343 176.260176,19.390056 176.37,18.29 L176.37,10.57 L173.07,10.57 L173.07,18.42 C173.07,20.42 172.13,21.32 170.48,21.32 L168.48,21.32 C168.53,19.68 168.48,17.94 168.48,16.32 C168.48,12.8 164.89,10.49 160.48,10.49 C155.6,10.49 152.58,13.03 152.58,16.73 C152.540064,18.485274 153.270951,20.1699688 154.58,21.34 C155.652807,22.2474756 156.965907,22.8241278 158.36,23 L158.36,23 Z M205,83.83 L192.18,83.83 L192.18,65.55 L204.06,65.55 C214.42,65.55 221.33,67.11 221.33,74.73 C221.33,82.35 212.46,83.83 205,83.83 Z M192.34,43 L207.21,43 C215.37,43 219.49,45.54 219.49,50.55 C219.49,56.3 214.82,59.2 205.63,59.2 L192.34,59.2 L192.34,43 Z M219.15,62.14 C224.76,60.21 227.63,56.25 227.63,50.32 C227.63,41.32 220.57,36.62 207.21,36.62 L184,36.62 L184,90.2 L204.82,90.2 C220.93,90.2 229.43,84.78 229.43,74.51 C229.46,68.58 225.73,64.13 219.15,62.11 L219.15,62.14 Z M261,83.88 C247.63,83.88 241.63,73.26 241.63,62.75 C241.63,52.24 247.63,41.62 261,41.62 C274.37,41.62 280.36,52.24 280.36,62.75 C280.36,73.26 274.33,83.88 261,83.88 Z M280.54,83.31 C285.54,78.56 288.22,71.49 288.35,62.76 L288.35,62.34 C288.35,54.02 285.35,46.76 279.94,41.87 C275.19,37.58 268.63,35.31 261,35.31 C253.37,35.31 246.81,37.58 242,41.87 C236.48,46.87 233.49,54.26 233.6,62.76 C233.79,79.94 244,90.2 261,90.2 L288.35,90.2 L288.35,82.78 L280.54,83.31 Z M185.69,7.17 C186.138519,7.20583664 186.582813,7.0613352 186.924439,6.76851244 C187.266066,6.47568968 187.476818,6.05872355 187.51,5.61 C187.392411,4.69725916 186.615284,4.01382686 185.695,4.01382686 C184.774716,4.01382686 183.997589,4.69725916 183.88,5.61 C183.94935,6.52394206 184.734586,7.21601523 185.65,7.17 L185.69,7.17 Z M141.23,26.71 C141.377781,27.5973229 142.145455,28.247717 143.045,28.247717 C143.944545,28.247717 144.712219,27.5973229 144.86,26.71 C144.86,25.6965576 144.038442,24.8750003 143.025,24.8750003 C142.011558,24.8750003 141.19,25.6965576 141.19,26.71 L141.23,26.71 Z M167,80.35 L130.9,36.6 L120,36.6 L120,90.13 L129.47,90.13 L129.47,47.27 L165,90.13 L176.51,90.13 L176.51,36.6 L167,36.6 L167,80.35 Z M175.52,25.12 C174.582339,25.0681805 173.774565,25.7738728 173.7,26.71 C173.834059,27.6118007 174.608289,28.279445 175.52,28.279445 C176.431711,28.279445 177.205941,27.6118007 177.34,26.71 C177.265425,25.769758 176.451442,25.0625272 175.51,25.12 L175.52,25.12 Z M244.47,5.26 L242,5.26 C240,5.26 240,3.04 240,3.04 C240,3.04 240,1.68 242,1.68 L244.38,1.68 L244.38,0.28 L241.56,0.28 C237.19,0.28 237.19,2.96 237.19,2.96 C237.089826,3.9171148 237.559255,4.84423676 238.39,5.33 L235.71,5.33 L235.71,7.09 L244.46,7.09 L244.46,5.27 L244.47,5.26 Z M288.17,18.17 L288.17,10.5 L284.9,10.5 L284.9,18.32 C284.9,20.32 283.9,21.26 282.28,21.26 L278.58,21.26 C279.276404,20.4038409 279.701227,19.3591956 279.8,18.26 L279.8,10.69 L276.59,10.69 L276.59,18.4 C276.59,20.4 275.65,21.3 274.01,21.3 L270.36,21.3 C270.978722,20.4755793 271.343615,19.4886297 271.41,18.46 L271.41,3.87 L268,3.87 L268,18.3 C268,20.3 267,21.3 265.4,21.3 L253,21.3 L253,10.69 L249.81,10.69 L249.81,23 L282.98,23 C285.738335,23.1012905 288.056972,20.9482702 288.16,18.19 L288.17,18.17 Z M282.17,26.69 C282.06574,27.4502439 282.444232,28.1953676 283.119661,28.5595618 C283.795089,28.923756 284.625617,28.8305418 285.203508,28.3256816 C285.781398,27.8208215 285.985296,27.0103333 285.715102,26.2921162 C285.444907,25.5738991 284.757359,25.0987749 283.99,25.1 C283.047108,25.05456 282.243789,25.7775472 282.19,26.72 L282.17,26.69 Z M271.36,18.17 C271.363819,18.2466191 271.363819,18.3233809 271.36,18.4 C271.37,20 271.37,18.58 271.37,18.2 L271.36,18.17 Z M278.03,7.17 C278.654481,7.26967606 279.279081,6.99218468 279.623715,6.46195887 C279.968349,5.93173307 279.968349,5.24826693 279.623715,4.71804113 C279.279081,4.18781532 278.654481,3.91032394 278.03,4.01 C277.423874,3.93611042 276.828978,4.21585856 276.499285,4.72981489 C276.169592,5.24377122 276.163351,5.90113014 276.483227,6.42125326 C276.803103,6.94137639 277.39258,7.23236857 278,7.17 L278.03,7.17 Z M271.36,18.11 L271.36,18.19 C271.368018,18.1641301 271.371403,18.1370474 271.37,18.11 L271.36,18.11 Z M264.06,5.36 L261.55,5.36 C259.55,5.36 259.55,3.13 259.55,3.13 C259.55,3.13 259.55,1.78 261.55,1.78 L264,1.78 L264,0.39 L261.16,0.39 C256.81,0.39 256.81,3.07 256.81,3.07 C256.713971,4.02653423 257.177155,4.95290251 258,5.45 L255.35,5.45 L255.35,7.21 L264.12,7.21 L264.12,5.41 L264.06,5.36 Z M209.06,3.83 L205.77,3.83 L205.77,22.95 L209.09,22.95 L209.09,3.84 L209.06,3.83 Z M190.06,7.16 C190.994359,7.22913846 191.810369,6.53352312 191.89,5.6 C191.772058,4.68198769 190.990558,3.99446748 190.065,3.99446748 C189.139442,3.99446748 188.357942,4.68198769 188.24,5.6 C188.275456,6.05790782 188.493621,6.48230433 188.845367,6.77762036 C189.197113,7.07293639 189.652867,7.21434406 190.11,7.17 L190.06,7.16 Z M228.49,11.91 C230.362968,11.8488927 232.085777,12.9300747 232.845271,14.6432334 C233.604765,16.356392 233.2491,18.3590227 231.946148,19.7058936 C230.643197,21.0527645 228.653453,21.4746013 226.916066,20.7722992 C225.178679,20.069997 224.040997,18.3839642 224.04,16.51 C224.021288,15.3025992 224.48648,14.137911 225.331848,13.2756353 C226.177216,12.4133597 227.332465,11.9251981 228.54,11.92 L228.49,11.91 Z M217.25,28.18 L217.25,24.11 C217.261732,23.7614994 217.418499,23.43374 217.682445,23.2058735 C217.94639,22.978007 218.293518,22.8707484 218.64,22.91 C221.13,22.91 223.86,23.49 223.86,20.58 C225.226567,21.9785314 227.051397,22.8376927 229,23 C233.35,23 236.27,20.54 236.27,16.65 C236.27,12.53 232.8,10.41 228.48,10.41 C223.38,10.41 220.58,13.26 220.58,17.71 L220.58,18.98 C220.58,20.79 220.73,21.22 218.77,21.22 L218,21.22 C217.085242,21.1337092 216.175774,21.4315339 215.489249,22.0421997 C214.802725,22.6528655 214.400922,23.5214188 214.38,24.44 L214.38,28.22 L217.33,28.22 L217.25,28.18 Z M242.16,23 L242.16,10.6 L238.84,10.6 L238.84,23 L242.2,23 L242.16,23 Z"/>
+        <path fill="#ED1C29" d="M76.08,0.26 L76.08,90.2 L98.27,90.2 L98.27,0.26 L76.08,0.26 Z M0.71,90.2 L49.49,90.2 L49.49,0.26 L0.71,0.26 L0.71,90.2 Z"/>
+      </svg>
+    </a>
+    <div class="header-tools">
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button type="button" id="btn-en" class="active" data-lang="en">English</button>
+        <button type="button" id="btn-ar" data-lang="ar">العربية</button>
+      </div>
+      <button type="button" class="icon-btn" id="btnFullscreen" title="Full screen" aria-label="Toggle full screen">&#9723;</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div class="card">
+      <div class="card-header">
+        <h1 data-i18n="title">Suggestions &amp; Complaints</h1>
+        <p data-i18n="subtitle">We value your feedback. Share a suggestion or raise a concern.</p>
+      </div>
+
+      <div class="card-body">
+        <!-- Form -->
+        <form id="feedbackForm" class="form-panel" novalidate>
+          <div class="form-group">
+            <label><span data-i18n="label_type">Type</span></label>
+            <div class="type-options">
+              <div class="type-option">
+                <input type="radio" name="type" id="type_suggestion" value="Suggestion" checked />
+                <label for="type_suggestion" data-i18n="type_suggestion">Suggestion</label>
+              </div>
+              <div class="type-option">
+                <input type="radio" name="type" id="type_complaint" value="Complaint" />
+                <label for="type_complaint" data-i18n="type_complaint">Complaint</label>
+              </div>
+            </div>
+          </div>
+
+          <p class="anon-note" data-i18n="anon_note">Contact details are optional – leave them blank to submit anonymously. We can only reply to you if you fill them in.</p>
+
+          <div class="field-row">
+            <div class="form-group">
+              <label for="email"><span data-i18n="label_email">Email</span> <span class="opt" data-i18n="optional">(optional)</span></label>
+              <input type="email" id="email" name="email" autocomplete="email" placeholder="name@example.com" />
+              <div class="meta-line">
+                <span class="error-msg" id="err-email" data-i18n="err_email">Please enter a valid email address.</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="mobile"><span data-i18n="label_mobile">Mobile Number</span> <span class="opt" data-i18n="optional">(optional)</span></label>
+              <input type="tel" id="mobile" name="mobile" autocomplete="tel" placeholder="+971 5X XXX XXXX" />
+              <div class="meta-line">
+                <span class="hint" id="hintMobile" data-i18n="hint_mobile">UAE mobile preferred</span>
+                <span class="error-msg" id="err-mobile" data-i18n="err_mobile">Please enter a valid mobile number.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group grow">
+            <label for="message"><span data-i18n="label_message">Your Message</span> <span class="req">*</span></label>
+            <textarea id="message" name="message" maxlength="2000" placeholder="" required></textarea>
+            <div class="meta-line">
+              <span class="hint"><span id="charCount">0</span> / 2000</span>
+              <span class="error-msg" id="err-message" data-i18n="err_message">Please enter your suggestion or complaint.</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit" id="submitBtn">
+            <span class="spinner"></span>
+            <span class="btn-text" data-i18n="btn_submit">Submit</span>
+          </button>
+        </form>
+
+        <!-- Success -->
+        <div class="success-panel" id="successPanel">
+          <div class="success-icon">&#10003;</div>
+          <h2 data-i18n="success_title">Thank you</h2>
+          <p data-i18n="success_msg">Your feedback has been submitted successfully. Our team will review it shortly.</p>
+          <button type="button" class="btn-again" id="btnAgain" data-i18n="btn_again">Submit another</button>
+          <div class="auto-reset" id="autoReset"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span data-i18n="footer">National Bank of Umm Al Qaiwain (P.S.C) &middot; Licensed by the Central Bank of the UAE</span>
+    <span>
+      <a href="https://nbq.ae/" target="_blank" rel="noopener">nbq.ae</a>
+      &middot;
+      <a href="tel:600565656" dir="ltr">600 56 56 56</a>
+    </span>
+    <span class="proto-badge">PROTOTYPE &middot; No data stored</span>
+  </footer>
+
+  <script>
+    /* ---------- i18n ---------- */
+    const i18n = {
+      en: {
+        title: 'Suggestions & Complaints',
+        subtitle: 'We value your feedback. Share a suggestion or raise a concern.',
+        label_type: 'Type',
+        type_suggestion: 'Suggestion',
+        type_complaint: 'Complaint',
+        optional: '(optional)',
+        anon_note: 'Contact details are optional – leave them blank to submit anonymously. We can only reply to you if you fill them in.',
+        label_email: 'Email',
+        label_mobile: 'Mobile Number',
+        hint_mobile: 'UAE mobile preferred',
+        label_message: 'Your Message',
+        btn_submit: 'Submit',
+        err_email: 'Please enter a valid email address.',
+        err_mobile: 'Please enter a valid mobile number.',
+        err_message: 'Please enter your suggestion or complaint.',
+        success_title: 'Thank you',
+        success_msg: 'Your feedback has been submitted successfully. Our team will review it shortly.',
+        btn_again: 'Submit another',
+        footer: 'National Bank of Umm Al Qaiwain (P.S.C) · Licensed by the Central Bank of the UAE',
+        placeholder_message: 'Write your suggestion or complaint here…',
+        auto_reset: 'Returning to the form in {s}s…'
+      },
+      ar: {
+        title: 'الاقتراحات والشكاوى',
+        subtitle: 'نقدر ملاحظاتكم. شاركنا اقتراحاً أو قدّم شكوى.',
+        label_type: 'النوع',
+        type_suggestion: 'اقتراح',
+        type_complaint: 'شكوى',
+        optional: '(اختياري)',
+        anon_note: 'بيانات التواصل اختيارية – اتركها فارغة للإرسال بشكل مجهول. لا نستطيع الرد عليك إلا إذا قمت بتعبئتها.',
+        label_email: 'البريد الإلكتروني',
+        label_mobile: 'رقم الجوال',
+        hint_mobile: 'يفضل رقم إماراتي',
+        label_message: 'رسالتك',
+        btn_submit: 'إرسال',
+        err_email: 'يرجى إدخال بريد إلكتروني صحيح.',
+        err_mobile: 'يرجى إدخال رقم جوال صحيح.',
+        err_message: 'يرجى إدخال اقتراحك أو شكواك.',
+        success_title: 'شكراً لك',
+        success_msg: 'تم إرسال ملاحظاتك بنجاح. سيقوم فريقنا بمراجعتها قريباً.',
+        btn_again: 'إرسال آخر',
+        footer: 'بنك أم القيوين الوطني (ش.م.ع) · مرخّص من مصرف الإمارات العربية المتحدة المركزي',
+        placeholder_message: 'اكتب اقتراحك أو شكواك هنا…',
+        auto_reset: 'العودة إلى النموذج بعد {s} ثانية…'
+      }
+    };
+
+    let currentLang = 'en';
+
+    function applyLang(lang) {
+      currentLang = lang;
+      const dict = i18n[lang];
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.body.classList.toggle('rtl', lang === 'ar');
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+      });
+
+      document.getElementById('message').placeholder = dict.placeholder_message;
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-ar').classList.toggle('active', lang === 'ar');
+    }
+
+    document.getElementById('btn-en').addEventListener('click', () => applyLang('en'));
+    document.getElementById('btn-ar').addEventListener('click', () => applyLang('ar'));
+
+    /* ---------- Kiosk: full-screen toggle ---------- */
+    document.getElementById('btnFullscreen').addEventListener('click', () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    });
+
+    /* ---------- Char counter ---------- */
+    const messageEl = document.getElementById('message');
+    const charCount = document.getElementById('charCount');
+    messageEl.addEventListener('input', () => {
+      charCount.textContent = messageEl.value.length;
+    });
+
+    /* ---------- Validation ---------- */
+    function validateEmail(v) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+    }
+
+    function validateMobile(v) {
+      const cleaned = v.replace(/[\s\-()]/g, '');
+      // Accept UAE and general international formats
+      return /^(\+971|00971|0)?5[0-9]{8}$/.test(cleaned) || /^\+?[1-9]\d{7,14}$/.test(cleaned);
+    }
+
+    function showError(id, show) {
+      const input = document.getElementById(id.replace('err-', ''));
+      const err = document.getElementById(id);
+      if (input) input.classList.toggle('error', show);
+      if (err) err.classList.toggle('show', show);
+      // The mobile hint and its error share one reserved line; swap them.
+      if (id === 'err-mobile') {
+        document.getElementById('hintMobile').style.visibility = show ? 'hidden' : 'visible';
+      }
+    }
+
+    function validateForm() {
+      const email = document.getElementById('email').value;
+      const mobile = document.getElementById('mobile').value;
+      const message = document.getElementById('message').value.trim();
+      let ok = true;
+      let firstInvalid = null;
+
+      // Email and mobile are optional: only a value that IS present must be valid,
+      // so an anonymous submission (both blank) passes.
+      if (email.trim() && !validateEmail(email)) { showError('err-email', true); ok = false; firstInvalid = firstInvalid || 'email'; }
+      else showError('err-email', false);
+
+      if (mobile.trim() && !validateMobile(mobile)) { showError('err-mobile', true); ok = false; firstInvalid = firstInvalid || 'mobile'; }
+      else showError('err-mobile', false);
+
+      if (!message) { showError('err-message', true); ok = false; firstInvalid = firstInvalid || 'message'; }
+      else showError('err-message', false);
+
+      if (firstInvalid) document.getElementById(firstInvalid).focus();
+      return ok;
+    }
+
+    /* ---------- Submit (mock API) ---------- */
+    const form = document.getElementById('feedbackForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const successPanel = document.getElementById('successPanel');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validateForm()) return;
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('loading');
+
+      const payload = {
+        type: form.querySelector('input[name="type"]:checked').value,
+        email: document.getElementById('email').value.trim() || null,
+        mobile: document.getElementById('mobile').value.trim() || null,
+        message: document.getElementById('message').value.trim(),
+        anonymous: !document.getElementById('email').value.trim() && !document.getElementById('mobile').value.trim(),
+        language: currentLang,
+        submittedAt: new Date().toISOString(),
+        source: 'Customer Form Prototype (kiosk)'
+      };
+
+      // Prototype: simulate API call to CRM / ESB middleware
+      // In production this would POST to the middleware API endpoint
+      console.log('Payload to be sent to CRM/ESB API:', payload);
+
+      await new Promise(r => setTimeout(r, 900)); // simulate network
+
+      // No local storage - data only "sent"
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+      form.classList.add('hide');
+      successPanel.classList.add('show');
+      startSuccessCountdown();
+    });
+
+    function resetForm() {
+      form.reset();
+      charCount.textContent = '0';
+      ['err-email', 'err-mobile', 'err-message'].forEach(id => showError(id, false));
+      successPanel.classList.remove('show');
+      form.classList.remove('hide');
+    }
+
+    document.getElementById('btnAgain').addEventListener('click', () => {
+      stopSuccessCountdown();
+      resetForm();
+    });
+
+    /* ---------- Kiosk hygiene ----------
+       Shared screen: clear the confirmation automatically, and wipe a
+       half-typed form (it holds email / mobile / message) after idle. */
+    const AUTO_RESET_SECONDS = 15;
+    const IDLE_RESET_MS = 120000;
+    const autoResetEl = document.getElementById('autoReset');
+    let countdownTimer = null;
+    let idleTimer = null;
+
+    function startSuccessCountdown() {
+      let left = AUTO_RESET_SECONDS;
+      const tick = () => {
+        autoResetEl.textContent = i18n[currentLang].auto_reset.replace('{s}', left);
+        if (left-- <= 0) { stopSuccessCountdown(); resetForm(); }
+      };
+      tick();
+      countdownTimer = setInterval(tick, 1000);
+    }
+
+    function stopSuccessCountdown() {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+      autoResetEl.textContent = '';
+    }
+
+    function touchIdle() {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        if (!successPanel.classList.contains('show')) {
+          resetForm();
+          applyLang('en');
+        }
+      }, IDLE_RESET_MS);
+    }
+
+    ['pointerdown', 'keydown', 'input'].forEach(ev =>
+      document.addEventListener(ev, touchIdle, { passive: true })
+    );
+
+    // Init
+    applyLang('en');
+    touchIdle();
+
+    /* ---------- No-scroll guard ----------
+       The layout is sized to fit the viewport, so the scrollbar is hidden.
+       Reveal it only if the content genuinely cannot fit. */
+    (function () {
+      const scroller = document.querySelector('.card-body');
+      const sync = () => scroller.classList.toggle('scrollable', scroller.scrollHeight - scroller.clientHeight > 2);
+      if (window.ResizeObserver) {
+        const ro = new ResizeObserver(sync);
+        ro.observe(scroller);
+        [...scroller.children].forEach(c => ro.observe(c));
+      }
+      window.addEventListener('resize', sync);
+      window.addEventListener('orientationchange', sync);
+      sync();
+    })();
+
+  </script>
+</body>
+</html>
