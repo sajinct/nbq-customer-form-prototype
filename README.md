@@ -1,8 +1,9 @@
 # NBQ Customer Form — Prototype
 
 Bilingual (English / Arabic) **suggestion & complaint form** prototypes for
-National Bank of Umm Al Qaiwain, built to run full-screen on a branch kiosk or in a
-browser tab **without a scrollbar at any screen size**.
+National Bank of Umm Al Qaiwain, built to run full-screen on a branch kiosk, tablet or
+desktop browser tab **with no page scrollbar** — the whole form fits the viewport.
+Phones are the deliberate exception and scroll normally.
 
 > [!IMPORTANT]
 > **This is an unofficial prototype for design review.** It is not operated by NBQ and
@@ -50,7 +51,7 @@ relative path.
 
 Three conventions hold across all three pages, so the set behaves as one system.
 
-### 1. Fixed viewport, no page scrollbar
+### 1. Fixed viewport on kiosk, tablet and desktop
 
 On a kiosk there is often no mouse wheel and no visible scrollbar, so anything below
 the fold is unreachable. The pages are therefore built to *fit*, not to scroll:
@@ -64,8 +65,33 @@ the fold is unreachable. The pages are therefore built to *fit*, not to scroll:
 | Progressive trimming | `max-height` media queries drop non-essential chrome (footer, subtitles, helper copy) before fields are allowed to shrink |
 | Scroll fallback | If a viewport genuinely cannot fit the content (tiny phone, or an on-screen keyboard halving the screen), a small JS guard restores a thin scrollbar **inside the form column only** — better a visible scrollbar than content stranded behind an invisible one |
 
-Verified with no page overflow at 1920×1080, 1600×900, 1366×768, 1280×1024, 1024×768,
-800×1280 and 768×1024, in both languages.
+#### Phones scroll instead
+
+Forcing nine fields into a 375 px-wide viewport means type too small to read, and phone
+users expect to scroll anyway. Below the breakpoint the fixed shell switches off
+entirely: natural page scroll, fixed 16 px type instead of viewport-scaled, a sticky
+header, a resizable message box, and no reserved error lines (they exist only to stop a
+desktop error reflowing a fixed layout).
+
+```css
+@media (max-width: 640px), (max-height: 480px) and (pointer: coarse) { … }
+```
+
+The second clause catches phone landscape. Tablets and desktop windows match neither, so
+they keep the fixed design untouched. Inputs are exactly 16 px on mobile — below that,
+iOS Safari zooms the page when a field takes focus and leaves the layout shifted
+sideways. The full-screen button is hidden on phones: mobile browsers manage their own
+chrome, and iOS Safari will not fullscreen a non-video element.
+
+#### Verified
+
+| | Result |
+|---|---|
+| 320×568, 360×740, 375×844, 414×896, 430×932 | scrolls vertically, no horizontal overflow, 16 px inputs |
+| 768×1024, 834×1112, 1024×768 (tablet) | fits, no scroll |
+| 1280×800, 1366×768, 1600×900, 1920×1080 (desktop) | fits, no scroll |
+
+In both languages, including with every validation error showing.
 
 ### 2. Brand palette derived from the logo
 
@@ -206,9 +232,13 @@ it — it is ~8.5 KB of path data and a truncated copy renders a mangled wordmar
 
 ## Browser support
 
-Chrome, Edge, Safari and Firefox, current versions. Uses `100dvh`, `clamp()`, CSS
-custom properties, logical properties and `ResizeObserver` — all baseline in evergreen
-browsers. No transpilation, no polyfills.
+Chrome, Edge, Safari and Firefox, current versions, desktop and mobile. Uses `100dvh`,
+`clamp()`, CSS custom properties, logical properties, `matchMedia` and `ResizeObserver` —
+all baseline in evergreen browsers. No transpilation, no polyfills.
+
+Pinch-zoom is allowed (WCAG 1.4.4). Lock it at the browser or OS level if a kiosk needs
+it disabled — a `user-scalable=no` meta tag is the wrong tool, since iOS has ignored it
+since iOS 10.
 
 ---
 

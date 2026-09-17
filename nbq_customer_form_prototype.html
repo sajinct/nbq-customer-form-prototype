@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
   <meta name="robots" content="noindex, nofollow" />
   <!-- Prototype for review, not an official NBQ service: keep it out of search results. -->
   <title>NBQ | Suggestions &amp; Complaints</title>
@@ -447,6 +447,101 @@
     @media (prefers-reduced-motion: reduce) {
       * { transition: none !important; animation-duration: 0.01ms !important; }
     }
+
+    /* ================= MOBILE: scroll normally =================
+       The no-scroll shell above is for kiosk screens, tablets and desktop,
+       where the whole form can fit legibly. A phone cannot fit it without
+       shrinking text to an unreadable size, and phone users expect to
+       scroll - so below this breakpoint the fixed shell is switched off:
+       natural page scroll, fixed comfortable type, no viewport scaling.
+
+       Matches narrow viewports, plus short ones with a coarse pointer
+       (phone landscape). Tablets and desktop windows do not match.
+       ============================================================ */
+    @media (max-width: 640px), (max-height: 480px) and (pointer: coarse) {
+      :root {
+        /* Fixed sizes, not viewport-scaled: on a phone the scale should come
+           from the platform, not from how tall the window happens to be. */
+        --fs: 16px;
+        --gap: 14px;
+        --pad: 18px;
+      }
+
+      html, body { height: auto; }
+
+      body {
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;             /* the page itself scrolls again */
+      }
+
+      /* Keep the logo and language toggle reachable while scrolling. */
+      .header {
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
+        z-index: 50;
+      }
+
+      .stage {
+        flex: 0 0 auto;
+        overflow: visible;
+        padding: var(--gap) var(--pad) calc(var(--gap) * 1.5);
+      }
+
+      /* 16px is the threshold below which iOS Safari zooms the page when a
+         field takes focus, which then leaves the layout shifted sideways. */
+      .form-group input,
+      .form-group textarea { font-size: 16px; }
+
+      .card {
+        flex: 0 0 auto;
+        max-height: none;
+        margin: 0 auto;
+      }
+
+      .card-body { overflow: visible; }   /* no internal scroller on mobile */
+
+      /* A generous typing area that the customer can grow, instead of one
+         sized to whatever height was left over. */
+      .form-group.grow { flex: 0 0 auto; }
+
+      .form-group.grow textarea {
+        flex: 0 0 auto;
+        min-height: 9em;
+        resize: vertical;
+      }
+
+      .success-panel.show { min-height: 60vh; }
+
+      /* Measured: logo + language toggle + full-screen button overflowed a
+         360px viewport. The full-screen button is meaningless on a phone
+         (mobile browsers manage their own chrome, and iOS Safari will not
+         fullscreen a non-video element), so it goes; the rest is tightened. */
+      .header { gap: 10px; }
+      .logo { flex: 0 1 auto; min-width: 0; }
+      .logo-mark { height: calc(var(--fs) * 2.2); max-width: 100%; }
+      .header-tools { flex: 0 0 auto; }
+      .lang-toggle button { padding: 6px 11px; }
+      #btnFullscreen { display: none; }
+
+      /* The page scrolls here, so errors need no reserved line - and a
+         hidden-but-laid-out error span was stealing width from the hint,
+         wrapping it onto two lines. Errors now take space only when shown. */
+      .meta-line { min-height: 0; flex-wrap: wrap; }
+      .meta-line:empty { display: none; }
+      .error-msg { display: none; visibility: visible; }
+      .error-msg.show { display: block; }
+    }
+
+
+    /* Smallest phones still in use (iPhone SE, 320px): trim the header
+       further so the logo and language toggle keep sharing one row. */
+    @media (max-width: 360px) {
+      :root { --pad: 12px; }
+      .logo-mark { height: calc(var(--fs) * 1.9); }
+      .lang-toggle button { padding: 5px 9px; font-size: 12px; }
+    }
+
   </style>
 </head>
 <body>
@@ -782,7 +877,14 @@
        Reveal it only if the content genuinely cannot fit. */
     (function () {
       const scroller = document.querySelector('.card-body');
-      const sync = () => scroller.classList.toggle('scrollable', scroller.scrollHeight - scroller.clientHeight > 2);
+      // Phones scroll the page normally (see the MOBILE block in the CSS),
+      // so the internal scroller - and this guard - stay out of the way there.
+      const mobile = window.matchMedia('(max-width: 640px), (max-height: 480px) and (pointer: coarse)');
+      const sync = () => {
+        if (mobile.matches) { scroller.classList.remove('scrollable'); return; }
+        scroller.classList.toggle('scrollable', scroller.scrollHeight - scroller.clientHeight > 2);
+      };
+      mobile.addEventListener('change', sync);
       if (window.ResizeObserver) {
         const ro = new ResizeObserver(sync);
         ro.observe(scroller);
